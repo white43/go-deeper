@@ -16,9 +16,9 @@ type SaveBest struct {
 	saver        Exporter
 }
 
-// NewSaveBest exports models through the Exporter interface once their accuracy
-// exceeds the defined threshold value. SaveBest tracks the best accuracy during
-// training sessions and exports models only when their accuracy is higher than
+// NewSaveBest exports models through the Exporter interface once their Accuracy
+// exceeds the defined threshold value. SaveBest tracks the best Accuracy during
+// training sessions and exports models only when their Accuracy is higher than
 // previous best value in that session.
 func NewSaveBest(saver Exporter, threshold float32) Callback {
 	return &SaveBest{
@@ -28,8 +28,8 @@ func NewSaveBest(saver Exporter, threshold float32) Callback {
 }
 
 func (sb *SaveBest) AfterEpoch(n *Network, _ int, ev Evaluation) bool {
-	if ev.accuracy > sb.threshold && ev.accuracy > sb.bestAccuracy {
-		sb.bestAccuracy = ev.accuracy
+	if ev.Accuracy > sb.threshold && ev.Accuracy > sb.bestAccuracy {
+		sb.bestAccuracy = ev.Accuracy
 		sb.doSaveBest(n, ev)
 	}
 
@@ -49,7 +49,7 @@ func (sb *SaveBest) doSaveBest(n *Network, e Evaluation) {
 }
 
 func (sb *SaveBest) getFilename(e Evaluation) string {
-	return fmt.Sprintf("model-%.4f.json", e.accuracy)
+	return fmt.Sprintf("model-%.4f.json", e.Accuracy)
 }
 
 type EarlyStopping struct {
@@ -59,7 +59,7 @@ type EarlyStopping struct {
 }
 
 // NewEarlyStopping creates a Callback that may interrupt training process
-// when we have not seen any improvements in accuracy for waitEpochs epochs
+// when we have not seen any improvements in Accuracy for waitEpochs epochs
 func NewEarlyStopping(waitEpochs int) Callback {
 	return &EarlyStopping{waitEpochs: waitEpochs}
 }
@@ -69,8 +69,8 @@ func (es *EarlyStopping) AfterEpoch(n *Network, epoch int, ev Evaluation) bool {
 		return false
 	}
 
-	if ev.accuracy > es.bestAccuracy {
-		es.bestAccuracy = ev.accuracy
+	if ev.Accuracy > es.bestAccuracy {
+		es.bestAccuracy = ev.Accuracy
 		es.bestEpoch = epoch
 	}
 

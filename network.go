@@ -114,7 +114,7 @@ func (n *Network) Fit(o FitOptions) Evaluation {
 
 		evaluation = n.Evaluate(o.ValX, o.ValY)
 
-		fmt.Printf("Epoch %d (%.2f sec), val_acc: %.4f, lr: %.4f\n", epoch, float64(elapsed)/1000, evaluation.accuracy, lr)
+		fmt.Printf("Epoch %d (%.2f sec), val_acc: %.4f, lr: %.4f\n", epoch, float64(elapsed)/1000, evaluation.Accuracy, lr)
 
 		for _, c := range n.callbacks {
 			proceed := c.AfterEpoch(n, epoch, evaluation)
@@ -216,10 +216,10 @@ func (n *Network) computeDeltas(trainX *mat.Dense, trainY *mat.Dense) (*Stack, *
 }
 
 type Evaluation struct {
-	accuracy  float32
-	matrix    map[int]map[int]int
-	recall    map[int]counter
-	precision map[int]counter
+	Accuracy  float32
+	Matrix    map[int]map[int]int
+	Recall    map[int]Counter
+	Precision map[int]Counter
 }
 
 func (e Evaluation) ConfusionMatrix() string {
@@ -238,14 +238,14 @@ func (e Evaluation) ConfusionMatrix() string {
 				buf.WriteString(fmt.Sprintf("%9d", i) + " ")
 			}
 
-			if val, ok := e.matrix[i][j]; ok {
+			if val, ok := e.Matrix[i][j]; ok {
 				buf.WriteString(fmt.Sprintf("%5d", val) + " ")
 			} else {
 				buf.WriteString(fmt.Sprintf("%5d", 0) + " ")
 			}
 		}
 
-		if val, ok := e.recall[i]; ok {
+		if val, ok := e.Recall[i]; ok {
 			buf.WriteString(fmt.Sprintf("  %.2f", val.percent) + " ")
 		}
 
@@ -255,7 +255,7 @@ func (e Evaluation) ConfusionMatrix() string {
 	buf.WriteString("Precision ")
 
 	for i := range 10 {
-		if val, ok := e.precision[i]; ok {
+		if val, ok := e.Precision[i]; ok {
 			buf.WriteString(fmt.Sprintf("%.2f", val.percent) + " ")
 		} else {
 			buf.WriteString(fmt.Sprintf("%5d", 0) + " ")
@@ -265,7 +265,7 @@ func (e Evaluation) ConfusionMatrix() string {
 	return buf.String()
 }
 
-type counter struct {
+type Counter struct {
 	correct int
 	total   int
 	percent float32
@@ -286,14 +286,14 @@ func (n *Network) Evaluate(valX []*mat.Dense, valY []*mat.Dense) Evaluation {
 	var evaluation Evaluation
 	var correct int
 
-	evaluation.matrix = make(map[int]map[int]int, 10)
-	evaluation.recall = make(map[int]counter, 10)
-	evaluation.precision = make(map[int]counter, 10)
+	evaluation.Matrix = make(map[int]map[int]int, 10)
+	evaluation.Recall = make(map[int]Counter, 10)
+	evaluation.Precision = make(map[int]Counter, 10)
 
 	for i := range 10 {
-		evaluation.matrix[i] = make(map[int]int, 10)
-		evaluation.recall[i] = counter{}
-		evaluation.precision[i] = counter{}
+		evaluation.Matrix[i] = make(map[int]int, 10)
+		evaluation.Recall[i] = Counter{}
+		evaluation.Precision[i] = Counter{}
 	}
 
 	taskWg := &sync.WaitGroup{}
@@ -323,34 +323,34 @@ func (n *Network) Evaluate(valX []*mat.Dense, valY []*mat.Dense) Evaluation {
 			truth := Argmax(result.truth)
 			prediction := Argmax(result.pred)
 
-			evaluation.matrix[truth][prediction] += 1
+			evaluation.Matrix[truth][prediction] += 1
 
 			if prediction == truth {
 				correct++
 
 				// Recall (per label)
-				if v, ok := evaluation.recall[truth]; ok {
+				if v, ok := evaluation.Recall[truth]; ok {
 					v.correct += 1
-					evaluation.recall[truth] = v
+					evaluation.Recall[truth] = v
 				}
 
 				// Precision (per label)
-				if v, ok := evaluation.precision[prediction]; ok {
+				if v, ok := evaluation.Precision[prediction]; ok {
 					v.correct += 1
-					evaluation.precision[prediction] = v
+					evaluation.Precision[prediction] = v
 				}
 			}
 
 			// Recall (per label)
-			if v, ok := evaluation.recall[truth]; ok {
+			if v, ok := evaluation.Recall[truth]; ok {
 				v.total += 1
-				evaluation.recall[truth] = v
+				evaluation.Recall[truth] = v
 			}
 
 			// Precision (per label)
-			if v, ok := evaluation.precision[prediction]; ok {
+			if v, ok := evaluation.Precision[prediction]; ok {
 				v.total += 1
-				evaluation.precision[prediction] = v
+				evaluation.Precision[prediction] = v
 			}
 		}
 	}()
@@ -365,20 +365,20 @@ func (n *Network) Evaluate(valX []*mat.Dense, valY []*mat.Dense) Evaluation {
 	close(resultCh)
 	resultsWg.Wait()
 
-	// Overall accuracy
-	evaluation.accuracy = float32(correct) / float32(len(valX))
+	// Overall Accuracy
+	evaluation.Accuracy = float32(correct) / float32(len(valX))
 
 	for i := range 10 {
 		// Recall (per label)
-		if v, ok := evaluation.recall[i]; ok {
+		if v, ok := evaluation.Recall[i]; ok {
 			v.percent = (float32(v.correct) / float32(v.total)) * 100
-			evaluation.recall[i] = v
+			evaluation.Recall[i] = v
 		}
 
 		// Precision (per label)
-		if v, ok := evaluation.precision[i]; ok {
+		if v, ok := evaluation.Precision[i]; ok {
 			v.percent = float32(v.correct) / float32(v.total) * 100
-			evaluation.precision[i] = v
+			evaluation.Precision[i] = v
 		}
 	}
 
