@@ -13,12 +13,14 @@ type Optimizer interface {
 type SGD struct {
 	momentum  float64
 	momentums map[uintptr]*mat.Dense
+	nesterov  bool
 }
 
-func NewSGD(momentum float64) Optimizer {
+func NewSGD(momentum float64, nesterov bool) Optimizer {
 	return &SGD{
 		momentum:  momentum,
 		momentums: make(map[uintptr]*mat.Dense),
+		nesterov:  nesterov,
 	}
 }
 
@@ -38,10 +40,15 @@ func (s *SGD) Apply(weights, deltaWs *mat.Dense, lr float64) {
 			m.Add(m, delta)
 
 			// Update current gradient value with the value just computed
-			deltaWs.Copy(m)
-
-			// Save velocity
-			s.momentums[p] = m
+			if s.nesterov {
+				// With Nesterov optimization we almost double the gradient, as its
+				// formula is gradient + momentum * velocity
+				nm := mat.NewDense(m.RawMatrix().Rows, m.RawMatrix().Cols, nil)
+				nm.Scale(s.momentum, m)
+				deltaWs.Add(deltaWs, nm)
+			} else {
+				deltaWs.Copy(m)
+			}
 		} else {
 			s.momentums[p] = mat.NewDense(deltaWs.RawMatrix().Rows, deltaWs.RawMatrix().Cols, slices.Clone(weights.RawMatrix().Data))
 		}
