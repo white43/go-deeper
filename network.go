@@ -117,7 +117,7 @@ func (n *Network) Fit(o FitOptions) Evaluation {
 				batchSize = datasetSize - i
 			}
 
-			n.batch(o.TrainX[i:i+batchSize], o.TrainY[i:i+batchSize], lr)
+			n.batch(o.TrainX[i:i+batchSize], o.TrainY[i:i+batchSize], lr/float64(batchSize))
 		}
 		elapsed = time.Since(now).Milliseconds()
 
@@ -207,8 +207,8 @@ func (n *Network) batch(trainX []*mat.Dense, trainY []*mat.Dense, lr float64) {
 	resultsWg.Wait()
 
 	for i := range len(n.Layers) - 1 {
-		n.optimizer.Apply(n.Layers[i+1].Weights(), batchDeltaWs[i], lr/float64(len(trainX)))
-		n.optimizer.Apply(n.Layers[i+1].Biases(), batchDeltaBs[i], lr/float64(len(trainX)))
+		n.optimizer.Apply(n.Layers[i+1].Weights(), batchDeltaWs[i], lr)
+		n.optimizer.Apply(n.Layers[i+1].Biases(), batchDeltaBs[i], lr)
 	}
 }
 
