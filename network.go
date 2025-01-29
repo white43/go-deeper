@@ -96,6 +96,9 @@ func (n *Network) Fit(o FitOptions) Evaluation {
 	var evaluation Evaluation
 	var now time.Time
 	var elapsed int64
+	var batchSize int
+
+	datasetSize := len(o.TrainX)
 
 	for epoch := 1; epoch <= o.Epochs; epoch++ {
 		rand.Shuffle(len(o.TrainX), func(i, j int) {
@@ -107,8 +110,14 @@ func (n *Network) Fit(o FitOptions) Evaluation {
 
 		elapsed = 0
 		now = time.Now()
-		for i := 0; i < len(o.TrainX); i += o.BatchSize {
-			n.batch(o.TrainX[i:i+o.BatchSize], o.TrainY[i:i+o.BatchSize], lr)
+		for i := 0; i < datasetSize; i += o.BatchSize {
+			batchSize = o.BatchSize
+
+			if i+o.BatchSize > datasetSize {
+				batchSize = datasetSize - i
+			}
+
+			n.batch(o.TrainX[i:i+batchSize], o.TrainY[i:i+batchSize], lr)
 		}
 		elapsed = time.Since(now).Milliseconds()
 
