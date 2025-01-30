@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-wget -i mnist.txt
+wget -i mnist.txt -nc
