@@ -1,0 +1,6 @@
+github.com/white43/go-deeper v0.0.0-20250129230144-326f0827a8d1 h1:uBGi7Mo6Z5TCbCJ1nzwWP/Ohgoi7Z0+bQIGbuW4jmSs=
+github.com/white43/go-deeper v0.0.0-20250129230144-326f0827a8d1/go.mod h1:e5Y4IJBBIRAqLoTVyXUMxg/t/wdZkPv150TYtmx2PvI=
+golang.org/x/exp v0.0.0-20241004190924-225e2abe05e6 h1:1wqE9dj9NpSm04INVsJhhEUzhuDVjbcyKH91sVyPATw=
+golang.org/x/exp v0.0.0-20241004190924-225e2abe05e6/go.mod h1:NQtJDoLvd6faHhE7m4T/1IY708gDefGGjR/iUW8yQQ8=
+gonum.org/v1/gonum v0.15.1 h1:FNy7N6OUZVUaWG9pTiD+jlhdQ3lMP+/LcTpJ6+a8sQ0=
+gonum.org/v1/gonum v0.15.1/go.mod h1:eZTZuRFrzu5pcyjN5wJhcIhnUdNijYxX1T2IcrOGY0o=
