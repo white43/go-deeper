@@ -25,6 +25,9 @@ func NewSGD(momentum float64, nesterov bool) Optimizer {
 }
 
 func (s *SGD) Apply(weights, deltaWs *mat.Dense, lr float64) {
+	rows := deltaWs.RawMatrix().Rows
+	cols := deltaWs.RawMatrix().Cols
+
 	if s.momentum > 0 && s.momentum < 1 {
 		p := uintptr(unsafe.Pointer(&weights.RawMatrix().Data[0]))
 
@@ -33,7 +36,7 @@ func (s *SGD) Apply(weights, deltaWs *mat.Dense, lr float64) {
 			m.Scale(s.momentum, m)
 
 			// Multiply gradient by 1-momentum (i.e., g*0.1)
-			delta := mat.NewDense(deltaWs.RawMatrix().Rows, deltaWs.RawMatrix().Cols, nil)
+			delta := mat.NewDense(rows, cols, nil)
 			delta.Scale(1-s.momentum, deltaWs)
 
 			// Calculate new gradient (v+g)
@@ -43,18 +46,18 @@ func (s *SGD) Apply(weights, deltaWs *mat.Dense, lr float64) {
 			if s.nesterov {
 				// With Nesterov optimization we almost double the gradient, as its
 				// formula is gradient + momentum * velocity
-				nm := mat.NewDense(m.RawMatrix().Rows, m.RawMatrix().Cols, nil)
+				nm := mat.NewDense(rows, cols, nil)
 				nm.Scale(s.momentum, m)
 				deltaWs.Add(deltaWs, nm)
 			} else {
 				deltaWs.Copy(m)
 			}
 		} else {
-			s.momentums[p] = mat.NewDense(deltaWs.RawMatrix().Rows, deltaWs.RawMatrix().Cols, slices.Clone(weights.RawMatrix().Data))
+			s.momentums[p] = mat.NewDense(rows, cols, slices.Clone(weights.RawMatrix().Data))
 		}
 	}
 
-	tmp := mat.NewDense(deltaWs.RawMatrix().Rows, deltaWs.RawMatrix().Cols, nil)
+	tmp := mat.NewDense(rows, cols, nil)
 	tmp.Scale(lr, deltaWs)
 	weights.Sub(weights, tmp)
 }
