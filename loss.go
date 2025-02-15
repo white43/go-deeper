@@ -11,15 +11,14 @@ const (
 )
 
 type Loss interface {
-	Reset(batchSize int)
+	Reset()
 	Loss(prediction, truth *mat.Dense) float64
 	Derivative(prediction, truth *mat.Dense) *mat.Dense
-	Result() float64
+	Result(count int) float64
 }
 
 type CategoricalCrossEntropy struct {
 	Sum       float64
-	BatchSize int
 	Reduction int
 }
 
@@ -29,17 +28,16 @@ func NewCategoricalCrossEntropy(reduction int) Loss {
 	}
 }
 
-func (c *CategoricalCrossEntropy) Reset(batchSize int) {
-	c.Sum = 0
-	c.BatchSize = batchSize
+func (cce *CategoricalCrossEntropy) Reset() {
+	cce.Sum = 0
 }
 
-func (c *CategoricalCrossEntropy) Result() float64 {
-	switch c.Reduction {
+func (cce *CategoricalCrossEntropy) Result(count int) float64 {
+	switch cce.Reduction {
 	case ReductionMean:
-		return c.Sum / float64(c.BatchSize)
+		return cce.Sum / float64(count)
 	case ReductionSum:
-		return c.Sum
+		return cce.Sum
 	}
 
 	return math.NaN()
@@ -48,7 +46,7 @@ func (c *CategoricalCrossEntropy) Result() float64 {
 // Loss computes Categorical cross-entropy. This operation is broken down into
 // two steps: 1) we need to compute softmax function over the prediction vector
 // 2) calculate entropy between predictions and truth vectors
-func (c *CategoricalCrossEntropy) Loss(prediction, truth *mat.Dense) float64 {
+func (cce *CategoricalCrossEntropy) Loss(prediction, truth *mat.Dense) float64 {
 	y := truth.RawMatrix().Data
 	yHat := prediction.RawMatrix().Data
 
@@ -69,8 +67,8 @@ func (c *CategoricalCrossEntropy) Loss(prediction, truth *mat.Dense) float64 {
 	return -entropy
 }
 
-func (c *CategoricalCrossEntropy) Derivative(prediction, truth *mat.Dense) *mat.Dense {
-	c.Sum += c.Loss(prediction, truth)
+func (cce *CategoricalCrossEntropy) Derivative(prediction, truth *mat.Dense) *mat.Dense {
+	cce.Sum += cce.Loss(prediction, truth)
 
 	tmp := mat.NewDense(truth.RawMatrix().Rows, truth.RawMatrix().Cols, nil)
 	tmp.Sub(prediction, truth)

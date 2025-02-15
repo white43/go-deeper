@@ -107,7 +107,9 @@ func (n *Network) Fit(o FitOptions) Evaluation {
 		})
 
 		lr := o.LearningRate.LearningRate(o.Epochs, epoch)
+
 		loss := float64(0)
+		n.loss.Reset()
 
 		elapsed = 0
 		now = time.Now()
@@ -118,12 +120,11 @@ func (n *Network) Fit(o FitOptions) Evaluation {
 				batchSize = datasetSize - i
 			}
 
-			n.loss.Reset(batchSize)
 			n.batch(o.TrainX[i:i+batchSize], o.TrainY[i:i+batchSize], lr/float64(batchSize))
-			loss = n.loss.Result()
 		}
 		elapsed = time.Since(now).Milliseconds()
 
+		loss = n.loss.Result(len(o.TrainX))
 		evaluation = n.Evaluate(o.ValX, o.ValY)
 
 		fmt.Printf("Epoch %d (%.2f sec), loss: %.4f, val_acc: %.4f, lr: %.4f\n", epoch, float64(elapsed)/1000, loss, evaluation.Accuracy, lr)
