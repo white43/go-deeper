@@ -36,7 +36,7 @@ n.AddLayer(gd.NewOutputLayer(10, gd.NewSoftmax()))
 // In this example, Stochastic Gradient Descent with Nesterov Accelerated Gradient is used
 n.SetOptimizer(gd.NewSGD(0.9, true))
 // Categorical cross entropy for multiclass classification
-n.SetLossFunction(gd.NewCategoricalCrossEntropy())
+n.SetLossFunction(gd.NewCategoricalCrossEntropy(gd.ReductionMean))
 
 // Create data for training and validation
 // This data is expected to be in the form of *mat.Dense slices
@@ -48,13 +48,13 @@ valX, valY, _ := Load("t10k")
 lr := gd.NewFlatLearningRate(0.1)
 
 options := gd.FitOptions{
-TrainX:       trainX,
-TrainY:       trainY,
-ValX:         valX,
-ValY:         valY,
-Epochs:       10,
-BatchSize:    32,
-LearningRate: lr,
+    TrainX:       trainX,
+    TrainY:       trainY,
+    ValX:         valX,
+    ValY:         valY,
+    Epochs:       10,
+    BatchSize:    32,
+    LearningRate: lr,
 }
 
 // Train the network    

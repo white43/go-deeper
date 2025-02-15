@@ -1,57 +1,77 @@
 package deeper
 
 import (
-	"math"
-	"slices"
-
 	"gonum.org/v1/gonum/mat"
+	"math"
+)
+
+const (
+	ReductionMean = iota
+	ReductionSum
 )
 
 type Loss interface {
+	Reset(batchSize int)
 	Loss(prediction, truth *mat.Dense) float64
 	Derivative(prediction, truth *mat.Dense) *mat.Dense
+	Result() float64
 }
 
-type CategoricalCrossEntropy struct{}
-
-func NewCategoricalCrossEntropy() Loss {
-	return &CategoricalCrossEntropy{}
+type CategoricalCrossEntropy struct {
+	Sum       float64
+	BatchSize int
+	Reduction int
 }
 
+func NewCategoricalCrossEntropy(reduction int) Loss {
+	return &CategoricalCrossEntropy{
+		Reduction: reduction,
+	}
+}
+
+func (c *CategoricalCrossEntropy) Reset(batchSize int) {
+	c.Sum = 0
+	c.BatchSize = batchSize
+}
+
+func (c *CategoricalCrossEntropy) Result() float64 {
+	switch c.Reduction {
+	case ReductionMean:
+		return c.Sum / float64(c.BatchSize)
+	case ReductionSum:
+		return c.Sum
+	}
+
+	return math.NaN()
+}
+
+// Loss computes Categorical cross-entropy. This operation is broken down into
+// two steps: 1) we need to compute softmax function over the prediction vector
+// 2) calculate entropy between predictions and truth vectors
 func (c *CategoricalCrossEntropy) Loss(prediction, truth *mat.Dense) float64 {
-	logSoftMax := mat.NewDense(prediction.RawMatrix().Rows, prediction.RawMatrix().Cols, nil)
-	logSoftMax.Copy(prediction)
-
-	// max_x = np.max(x, axis=axis, keepdims=True)
-	maxPred := slices.Max(logSoftMax.RawMatrix().Data)
-
-	// logsumexp = np.log(np.exp(x - max_x).sum(axis=axis, keepdims=True))
-	logSumExp := float64(0)
-
-	for i := range logSoftMax.RawMatrix().Data {
-		logSumExp += math.Exp(logSoftMax.RawMatrix().Data[i] - maxPred)
-	}
-
-	logSumExp = math.Log(logSumExp)
-
-	// log_softmax = x - max_x - logsumexp
-	for i := range logSoftMax.RawMatrix().Data {
-		logSoftMax.RawMatrix().Data[i] -= (maxPred + logSumExp)
-	}
-
-	// Hadamard product
-	logSoftMax.MulElem(prediction, logSoftMax)
+	y := truth.RawMatrix().Data
+	yHat := prediction.RawMatrix().Data
 
 	sum := float64(0)
 
-	for i := range logSoftMax.RawMatrix().Data {
-		sum -= truth.RawMatrix().Data[i] * logSoftMax.RawMatrix().Data[i]
+	for i := range len(yHat) {
+		sum += math.Exp(yHat[i])
 	}
 
-	return sum
+	entropy := float64(0)
+
+	for i := range len(y) {
+		if y[i] > 0 {
+			entropy += y[i] * math.Log(math.Exp(yHat[i])/sum)
+		}
+	}
+
+	return -entropy
 }
 
 func (c *CategoricalCrossEntropy) Derivative(prediction, truth *mat.Dense) *mat.Dense {
+	c.Sum += c.Loss(prediction, truth)
+
 	tmp := mat.NewDense(truth.RawMatrix().Rows, truth.RawMatrix().Cols, nil)
 	tmp.Sub(prediction, truth)
 

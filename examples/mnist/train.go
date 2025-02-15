@@ -13,7 +13,7 @@ func main() {
 	n.AddLayer(gd.NewOutputLayer(10, gd.NewSoftmax()))
 
 	n.SetOptimizer(gd.NewSGD(0.9, true))
-	n.SetLossFunction(gd.NewCategoricalCrossEntropy())
+	n.SetLossFunction(gd.NewCategoricalCrossEntropy(gd.ReductionMean))
 
 	trainX, trainY, err := Load("train")
 	if err != nil {
