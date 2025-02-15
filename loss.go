@@ -17,6 +17,48 @@ type Loss interface {
 	Result(count int) float64
 }
 
+type BinaryCrossEntropy struct {
+	Sum       float64
+	Reduction int
+}
+
+func NewBinaryCrossEntropy(reduction int) Loss {
+	return &BinaryCrossEntropy{
+		Reduction: reduction,
+	}
+}
+
+func (bce *BinaryCrossEntropy) Reset() {
+	bce.Sum = 0
+}
+
+func (bce *BinaryCrossEntropy) Result(count int) float64 {
+	switch bce.Reduction {
+	case ReductionMean:
+		return bce.Sum / float64(count)
+	case ReductionSum:
+		return bce.Sum
+	}
+
+	return math.NaN()
+}
+
+func (bce *BinaryCrossEntropy) Loss(prediction, truth *mat.Dense) float64 {
+	y := truth.RawMatrix().Data[0]
+	yHat := prediction.RawMatrix().Data[0]
+
+	return -(y*math.Log(yHat) + (1-y)*math.Log(1-yHat))
+}
+
+func (bce *BinaryCrossEntropy) Derivative(prediction, truth *mat.Dense) *mat.Dense {
+	bce.Sum += bce.Loss(prediction, truth)
+
+	tmp := mat.NewDense(truth.RawMatrix().Rows, truth.RawMatrix().Cols, nil)
+	tmp.Sub(prediction, truth)
+
+	return tmp
+}
+
 type CategoricalCrossEntropy struct {
 	Sum       float64
 	Reduction int

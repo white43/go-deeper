@@ -15,7 +15,7 @@ Current features
 * Feedforward and backpropagation
 * Optimizers: `SGD` (with Nesterov Accelerated Gradient)
 * Activation functions: `Sigmoid`, `SoftMax`
-* Loss functions: `CategoricalCrossEntropy`
+* Loss functions: `BinaryCrossEntropy`, `CategoricalCrossEntropy`
 * Learning rate schedulers: `Flat`, `Cosine decay`
 * Callbacks: `Early stopping`, `Save best model`
 * Export: save to dsk and load saved weights
@@ -70,7 +70,7 @@ TODO
 
 * [ ] Prediction of individual and batches of samples 
 * [ ] Arbitrary number of channels (colours)
-* [ ] Binary cross entropy loss function
+* [x] Binary cross entropy loss function
 * [ ] Adam/AdamW optimizer
 * [ ] Lion optimizer
 * [ ] Dropouts
